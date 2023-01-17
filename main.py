@@ -8,9 +8,7 @@ from meteostat import Point, Daily
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
-#import pycurl
-#https://bulk.meteostat.net/v2/daily/12150.csv.gz
-#12150
+
 
 
 def read_data(file):
