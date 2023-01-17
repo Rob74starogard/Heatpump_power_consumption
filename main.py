@@ -1,13 +1,16 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import altair as alt
 import zipfile
 from meteostat import Point, Daily
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
+#import pycurl
+#https://bulk.meteostat.net/v2/daily/12150.csv.gz
+#12150
 
 
 def read_data(file):
@@ -39,19 +42,31 @@ def read_data(file):
     output['time']=output.index
     return (output)
 
-def dane_pogodowe(data):
-    start=data.index[0]
-    end=data.index[data.shape[0]-1]
-    stacja_pogodowa = Point(54.2112, 18.3807, 70)
-    data = Daily(stacja_pogodowa, start, end)
-    data = data.fetch()
-    return (data)
+# def dane_pogodowe(data):
+#     start=data.index[0]
+#     end=data.index[data.shape[0]-1]
+#     stacja_pogodowa = Point(54.2112, 18.3807, 70)
+#     data = Daily(stacja_pogodowa, start, end)
+#     data = data.fetch()
+#     return (data)
+def dane_pogodowe():
+    url = 'https://bulk.meteostat.net/v2/daily/12150.csv.gz'
+    data = pd.read_csv(url, compression='gzip', header=0, sep=',')
+    names=['time','tavg','tmin','tmax','prcp','snow','wdir','wspd','wpgt','pres','tsun']
+    data_out=pd.DataFrame()
+    for i in range(11):
+        data_out[names[i]] = data.iloc[:,i]
+    
+    data_out['time'] = pd.to_datetime(data_out['time'])
+    return data_out
+
+
 
 if __name__=='__main__':
     output = read_data('measurement_2752')
-    dane_pog = dane_pogodowe(output)
-    print(output)
+    dane_pog = dane_pogodowe()
     data2share=output.merge(dane_pog, how='inner', on='time')
+    data2share['usage'] = data2share['usage'].round(1)
     data2share.rename(columns = {'time':'Date'
                                 ,'usage':'Power consumption[kWh]'}, inplace = True)
     
@@ -141,12 +156,16 @@ if __name__=='__main__':
         family="Courier New, monospace",
         size=18,
         color="RebeccaPurple"))
-    st.plotly_chart(fig, theme='streamlit', use_container_width=True)
+    
+
+    jannuary_usage = st.checkbox('January consumption')
+    if jannuary_usage:
+        st.plotly_chart(fig, theme='streamlit', use_container_width=True)
 
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
-        name='Minimal 24h temperature',
+        name='Minimal 24h temperature [degC]',
         x=data2share['Date'],
         y=data2share['tmin'],
         #color=data_jan['tmin']
@@ -168,4 +187,7 @@ if __name__=='__main__':
         family="Courier New, monospace",
         size=18,
         color="RebeccaPurple"))
-    st.plotly_chart(fig, theme='streamlit', use_container_width=True)
+    
+    all_history = st.checkbox('Print all history')
+    if all_history:
+        st.plotly_chart(fig, theme='streamlit', use_container_width=True)
