@@ -1,0 +1,88 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import sklearn.metrics
+from pandas.plotting import scatter_matrix
+import lightgbm as lgb
+import matplotlib.pyplot as plt
+import numpy as np
+import optuna
+import joblib
+
+meas_data = pd.read_excel('output.xlsx')
+to_remove = ['Unnamed: 0', 'Phase 1 Forward active Energy kWh',
+       'Phase 2 Forward active Energy kWh',
+       'Phase 3 Forward active Energy kWh', 'suma', 'time']
+meas_data.drop(to_remove, axis=1, inplace=True)
+
+y = meas_data['usage']
+X = meas_data[['tavg', 'tmin', 'tmax', 'wdir', 'wspd', 'wpgt', 'pres']]
+
+def objective(trial):
+    meas_data = pd.read_excel('output.xlsx')
+    to_remove = ['Unnamed: 0', 'Phase 1 Forward active Energy kWh',
+       'Phase 2 Forward active Energy kWh',
+       'Phase 3 Forward active Energy kWh', 'suma', 'time']
+    y = meas_data['usage']
+    X = meas_data[['tavg', 'tmin', 'tmax','wdir', 'wspd', 'wpgt', 'pres']]
+    train_x, valid_x, train_y, valid_y= train_test_split(X, y, test_size=0.15, random_state=2023)
+    
+    dtrain = lgb.Dataset(train_x, train_y)
+
+    param = {
+        #"objective": "binary",
+        "metric": "rmse",
+        "verbosity": -1,
+        "boosting_type": "gbdt",
+        "learning_rate": trial.suggest_float("learning_rate",0,1),
+        "lambda_l1": trial.suggest_float("lambda_l1", 1e-8, 10.0, log=True),
+        "lambda_l2": trial.suggest_float("lambda_l2", 1e-8, 10.0, log=True),
+        "num_leaves": trial.suggest_int("num_leaves", 2, 35),
+        "feature_fraction": trial.suggest_float("feature_fraction", 0.4, 1.0),
+        "bagging_fraction": trial.suggest_float("bagging_fraction", 0.4, 1.0),
+        "bagging_freq": trial.suggest_int("bagging_freq", 1, 7),
+        "min_child_samples": trial.suggest_int("min_child_samples", 5, 100),
+    }
+
+    gbm = lgb.train(param, dtrain)
+    preds = gbm.predict(valid_x)
+    #pred_labels = np.rint(preds)
+    mse = sklearn.metrics.mean_squared_error(valid_y, preds)
+    return mse
+
+if __name__ == "__main__":
+        study = optuna.create_study(direction="minimize")
+        study.optimize(objective, n_trials=200)
+
+        print("Number of finished trials: {}".format(len(study.trials)))
+
+        print("Best trial:")
+        trial = study.best_trial
+
+        print("  Value: {}".format(trial.value))
+
+        print("  Params: ")
+        for key, value in trial.params.items():
+            print("    {}: {}".format(key, value))
+            
+            
+        model=lgb.LGBMRegressor(learning_rate=trial.params['learning_rate'], 
+                            lambda_l1=trial.params['lambda_l1'],
+                            lambda_l2= trial.params['lambda_l2'],
+                            num_leaves= trial.params['num_leaves'],
+                            feature_fraction= trial.params['feature_fraction'],
+                            bagging_fraction=trial.params['bagging_fraction'], 
+                            bagging_freq=trial.params['bagging_freq'],
+                            min_child_samples=trial.params['min_child_samples'] )
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=60222)
+        model.fit(X_train, y_train)
+        yy = model.predict(X)
+
+        plt.scatter(X['tavg'],yy, label='predicted', c=X.iloc[:,0], marker='o',alpha=0.3)
+        plt.scatter(X['tavg'],y,label='measured values',c='black',marker='+',alpha=1)
+        plt.xlabel('Average daily temperature $^{o}C$')
+        plt.ylabel('Energy consumption [kWh]')
+        plt.legend()
+        plt.show()
+
+        joblib.dump(model, 'lgb_model.sav')
