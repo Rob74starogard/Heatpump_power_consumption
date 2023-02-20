@@ -97,11 +97,13 @@ if __name__=='__main__':
                 Main target is predict average power consumption in past 16 yrs to calculate with highest presision power of the photovoltaic \n system needed to reduce significantlly costs of house and water heating.
              """)
     st.write("""Data used: 
-     Power consumption values readed via Suppla by Zamel energy counter """) 
+     Power consumption values readed via Suppla by Zamel energy counter and 
+      weather data for heat pump localization (past&present).""") 
     
+    first = data2share.iloc[:1,5].dt.strftime('%d-%m-%y') 
     last = data2share.iloc[-1:,5].dt.strftime('%d-%m-%y')
  
-    st.sidebar.header('History-> '+str(last.values)[2:10])
+    st.sidebar.header(str(first.values)[2:10] +'--> '+str(last.values)[2:10])
     all_history = st.sidebar.checkbox('Power consumption and aver. 24h \n temperature by day ')
     all_power = st.sidebar.checkbox('Summary of power usage per month')
     temp_usage = st.sidebar.checkbox('Temperature vs usage')
@@ -111,6 +113,7 @@ if __name__=='__main__':
     data_nov=data2share.loc[(data2share['Date'].dt.month==11)]
     data_dec=data2share.loc[(data2share['Date'].dt.month==12)]
     data_jan=data2share.loc[(data2share['Date'].dt.month==1)]
+    data_feb=data2share.loc[(data2share['Date'].dt.month==2)]
     
     fig = draw_2trace ("Power consumption in whole period as function of average 24h temperature",
                         'Temperature [degC], average 24h'
@@ -183,12 +186,12 @@ if __name__=='__main__':
         size=18,
         color="RebeccaPurple"))
     
-    labels = ['October','November','December','January']
-    values = [data_oct["Power consumption[kWh]"].sum(),data_nov["Power consumption[kWh]"].sum() , data_dec["Power consumption[kWh]"].sum(),data_jan["Power consumption[kWh]"].sum()]
+    labels = ['October','November','December','January','February']
+    values = [data_oct["Power consumption[kWh]"].sum(),data_nov["Power consumption[kWh]"].sum() , data_dec["Power consumption[kWh]"].sum(),data_jan["Power consumption[kWh]"].sum(),data_feb["Power consumption[kWh]"].sum()]
     summary=sum(values)
     fig_power = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.35)])
     fig_power.update_layout(
-    title="Power consumption per month. Summary usage - "+str(summary)+'[kWh].')
+    title="Power consumption per month. Summary usage : "+str(round(summary,2))+'[kWh].')
     
     
     if all_history:

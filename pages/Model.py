@@ -35,18 +35,18 @@ for i in year:
     if sh>=120:
         XX=data_tmp2[['tavg', 'tmin', 'tmax','wdir', 'wspd', 'wpgt', 'pres']]
         result=model.predict(XX)
-        value=result.sum()
+        value=round(result.sum(),2)
         usage.append(value)
         yr.append(i)
 consumption['yr']=yr
 consumption['usage']=usage
 
-#fig, ax = plt.subplots()
-#ax.bar(yr,usage)
-#ax.set_xlabel('Year')
-#ax.set_ylabel('Summary power consumption')
 
-fig = px.bar(consumption, x="yr", y="usage", color="usage", title='Summary power consumption')
+
+fig = px.bar(consumption, x="yr", 
+             y="usage", color="usage",
+            title='Summary power consumption',
+            labels={'yr':'Year','usage':'Power consumption [kWh]'})
 st.plotly_chart(fig, use_container_width=True)
 
 
