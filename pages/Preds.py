@@ -53,6 +53,6 @@ st.plotly_chart(fig, use_container_width=True)
 
 
 st.write('Average consumtion is '+str(round(consumption['usage'].mean(),2))+'[kWh].')
-st.write('Based on literature and operational data from existing instalations one can assume that 1kW of PV instalation generates 900-980[kWh].')
+st.write('Based on literature and operational data from existing instalations one can assume that 1kW of PV instalation generates 900-980[kWh] per year.')
 st.write('This gives approx. '+str(round(consumption['usage'].mean()/940,2))+'[kW] of PV instalation.')
 
