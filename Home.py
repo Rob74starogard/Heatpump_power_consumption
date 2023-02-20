@@ -107,7 +107,6 @@ if __name__=='__main__':
     all_history = st.sidebar.checkbox('Power consumption and aver. 24h \n temperature by day ')
     all_power = st.sidebar.checkbox('Summary of power usage per month')
     temp_usage = st.sidebar.checkbox('Temperature vs usage')
-    st.sidebar.header('Forrecast')
 
     data_oct=data2share.loc[(data2share['Date'].dt.month==10)]
     data_nov=data2share.loc[(data2share['Date'].dt.month==11)]
@@ -201,4 +200,4 @@ if __name__=='__main__':
     if temp_usage:
         st.plotly_chart(fig3, theme='streamlit', use_container_width=True)    
 
-    a=5
+ 

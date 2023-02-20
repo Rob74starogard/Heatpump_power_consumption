@@ -9,6 +9,8 @@ import joblib
 
 model = joblib.load('lgb_model.sav')
 
+st.header('Estimation of potencial PV power to cover HP power consumption')
+st.write('Aim is to calculate average usage of electricity in past years based on trained model (LightGBM) to estimate power of future PV installation.')
 
 def dane_pogodowe():
     url = 'https://bulk.meteostat.net/v2/daily/12150.csv.gz'
@@ -45,12 +47,12 @@ consumption['usage']=usage
 
 fig = px.bar(consumption, x="yr", 
              y="usage", color="usage",
-            title='Summary power consumption',
+            title='Predicted power consumption on past years',
             labels={'yr':'Year','usage':'Power consumption [kWh]'})
 st.plotly_chart(fig, use_container_width=True)
 
 
-
-
-#st.pyplot(fig)
+st.write('Average consumtion is '+str(round(consumption['usage'].mean(),2))+'[kWh].')
+st.write('Based on literature and operational data from existing instalations one can assume that 1kW of PV instalation generates 900-980[kWh].')
+st.write('This gives approx. '+str(round(consumption['usage'].mean()/940,2))+'[kW] of PV instalation.')
 
